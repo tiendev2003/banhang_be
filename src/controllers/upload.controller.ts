@@ -41,6 +41,7 @@ export const uploadImages = asyncHandler(
       const urls = await uploadService.uploadImages(allFiles);
       return sendSuccessResponse(res, "Images uploaded successfully", urls);
     } catch (error: any) {
+      console.log(error)
       return sendErrorResponse(
         res,
         error.message || "Error uploading images",
@@ -170,10 +171,14 @@ export const getFile = asyncHandler(async (req: Request, res: Response) => {
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         break;
     }
-    res.setHeader("Access-Control-Allow-Credentials", "true");
+    // Set appropriate headers for CORS and file serving
     res.setHeader("Content-Type", contentType);
-    //Access-Control-Allow-Origin
     res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Origin");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Cache-Control", "public, max-age=3600"); // Cache for 1 hour
+    
     return res.sendFile(filePath);
   } catch (error: any) {
     return sendErrorResponse(

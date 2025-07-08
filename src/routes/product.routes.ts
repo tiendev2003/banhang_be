@@ -519,7 +519,6 @@ router.get('/:id/variants', productController.getProductVariants);
  *         name: style
  *         schema:
  *           type: string
- *         description: Filter by style
  *         description: Maximum price filter
  *       - in: query
  *         name: brandId
@@ -707,7 +706,6 @@ router.get('/sizes', productController.getAvailableSizes);
  *         name: style
  *         schema:
  *           type: string
- *         description: Filter by style
  *         description: Maximum price filter
  *       - in: query
  *         name: brandId

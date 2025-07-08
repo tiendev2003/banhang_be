@@ -131,6 +131,7 @@ export const getUserProfile = asyncHandler(async (req: Request, res: Response) =
  */
 export const updateAvatar = asyncHandler(async (req: Request, res: Response) => {
   const { avatar } = req.body;
+  console.log('Avatar:', avatar);
 
   const user = await User.findById(req.user._id);
 

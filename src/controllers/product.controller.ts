@@ -40,6 +40,7 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
   
   try {
     // Tìm và kiểm tra sản phẩm có tồn tại không
+    console.log(productData)
     const product = await Product.findById(id);
     if (!product) {
       return sendErrorResponse(res, 'Không tìm thấy sản phẩm', 404);

@@ -17,7 +17,8 @@
     "test:coverage": "jest --coverage",
     "test:unit": "jest --testMatch='**/__tests__/unit/**/*.ts?(x)'",
     "test:integration": "jest --testMatch='**/__tests__/integration/**/*.ts?(x)'",
-    "test:size-color": "ts-node src/scripts/test-size-color-feature.ts"
+    "test:size-color": "ts-node src/scripts/test-size-color-feature.ts",
+    "seed:products": "ts-node src/seeds/product.seed.ts"
   },
   "keywords": [],
   "author": "",
