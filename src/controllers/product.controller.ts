@@ -136,48 +136,184 @@ export const getAllProducts = asyncHandler(async (req: Request, res: Response) =
     // Xây dựng điều kiện lọc
     const filter: any = {};
     
-    // Lọc theo giá
-    if (minPrice !== undefined && maxPrice !== undefined) {
-      filter.price = { $gte: Number(minPrice), $lte: Number(maxPrice) };
-    } else if (minPrice !== undefined) {
-      filter.price = { $gte: Number(minPrice) };
-    } else if (maxPrice !== undefined) {
-      filter.price = { $lte: Number(maxPrice) };
+    // Tạo array để chứa các điều kiện $and
+    const andConditions: any[] = [];
+    
+    // Lọc theo giá - ưu tiên giá sale nếu có
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      const priceConditions: any[] = [];
+      
+      if (minPrice !== undefined && maxPrice !== undefined) {
+        // Sản phẩm có sale: lọc theo salePrice
+        priceConditions.push({ 
+          isSale: true, 
+          salePrice: { $gte: Number(minPrice), $lte: Number(maxPrice) } 
+        });
+        // Sản phẩm không sale: lọc theo price
+        priceConditions.push({ 
+          isSale: false, 
+          price: { $gte: Number(minPrice), $lte: Number(maxPrice) } 
+        });
+      } else if (minPrice !== undefined) {
+        // Sản phẩm có sale: lọc theo salePrice
+        priceConditions.push({ 
+          isSale: true, 
+          salePrice: { $gte: Number(minPrice) } 
+        });
+        // Sản phẩm không sale: lọc theo price
+        priceConditions.push({ 
+          isSale: false, 
+          price: { $gte: Number(minPrice) } 
+        });
+      } else if (maxPrice !== undefined) {
+        // Sản phẩm có sale: lọc theo salePrice
+        priceConditions.push({ 
+          isSale: true, 
+          salePrice: { $lte: Number(maxPrice) } 
+        });
+        // Sản phẩm không sale: lọc theo price
+        priceConditions.push({ 
+          isSale: false, 
+          price: { $lte: Number(maxPrice) } 
+        });
+      }
+      
+      andConditions.push({ $or: priceConditions });
     }
     
     // Lọc theo thương hiệu
     if (brandId) {
-      filter.brand = brandId;
+      andConditions.push({ brand: brandId });
     }
     
     // Lọc theo danh mục
     if (categoryId) {
-      filter.category = categoryId;
+      andConditions.push({ category: categoryId });
     }
     
     // Lọc theo trạng thái hoạt động - chỉ thêm vào filter nếu được chỉ định
     if (isActive !== undefined) {
-      filter.isActive = isActive === 'true';
+      andConditions.push({ isActive: isActive === 'true' });
     }
     
     // Tìm kiếm theo tên hoặc mô tả
     if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
+      andConditions.push({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } }
+        ]
+      });
+    }
+    
+    // Kết hợp tất cả điều kiện
+    if (andConditions.length > 0) {
+      filter.$and = andConditions;
     }
     
     // Xác định hướng sắp xếp
     const sort: any = {};
-    sort[sortBy as string] = sortDirection === 'asc' ? 1 : -1;
     
     // Lấy thông tin phân trang
     const page = parseInt(req.query.page as string) || 0;
     const size = parseInt(req.query.size as string) || 10;
     const skip = page * size;
     
-    // Thực hiện truy vấn
+    // Nếu sắp xếp theo giá, sử dụng giá thực tế (ưu tiên sale price)
+    if (sortBy === 'price') {
+      // Sắp xếp bằng aggregation để tính giá thực tế
+      const direction = sortDirection === 'asc' ? 1 : -1;
+      
+      // Tạo pipeline aggregate để tính giá thực tế và sắp xếp
+      const pipeline: any[] = [];
+      
+      // Match với filter
+      if (Object.keys(filter).length > 0) {
+        pipeline.push({ $match: filter });
+      }
+      
+      // Thêm field actualPrice để sort
+      pipeline.push({
+        $addFields: {
+          actualPrice: {
+            $cond: {
+              if: "$isSale",
+              then: "$salePrice", 
+              else: "$price"
+            }
+          }
+        }
+      });
+      
+      // Sort theo actualPrice
+      pipeline.push({ $sort: { actualPrice: direction } });
+      
+      // Đếm tổng số documents
+      const totalItems = await Product.countDocuments(filter);
+      
+      // Thêm skip và limit
+      pipeline.push({ $skip: skip });
+      pipeline.push({ $limit: size });
+      
+      // Thực hiện aggregation
+      const productDocs = await Product.aggregate(pipeline);
+      
+      // Convert về model instances và populate
+      const products = await Promise.all(
+        productDocs.map(async (doc) => {
+          const product = await Product.findById(doc._id);
+          return await populateProduct(product);
+        })
+      );
+      
+      // Tạo thông tin phân trang
+      const pagination = {
+        page: page + 1,
+        totalPages: Math.ceil(totalItems / size),
+        totalItems
+      };
+      
+      return sendSuccessResponse(res, 'Lấy danh sách sản phẩm thành công', products, 200, pagination);
+    }
+    
+    // Nếu sắp xếp theo tên, sử dụng collation để sort đúng tiếng Việt
+    if (sortBy === 'name') {
+      const direction = sortDirection === 'asc' ? 1 : -1;
+      
+      // Đếm tổng số documents
+      const totalItems = await Product.countDocuments(filter);
+      
+      // Query với collation để sort tiếng Việt đúng
+      const productDocs = await Product.find(filter)
+        .collation({ 
+          locale: 'vi', 
+          strength: 2, // Ignore case và diacritics
+          caseLevel: false,
+          numericOrdering: true 
+        })
+        .sort({ name: direction })
+        .skip(skip)
+        .limit(size);
+      
+      // Sử dụng helper để populate
+      const products = await Promise.all(
+        productDocs.map(product => populateProduct(product))
+      );
+      
+      // Tạo thông tin phân trang
+      const pagination = {
+        page: page + 1,
+        totalPages: Math.ceil(totalItems / size),
+        totalItems
+      };
+      
+      return sendSuccessResponse(res, 'Lấy danh sách sản phẩm thành công', products, 200, pagination);
+    }
+    
+    // Sắp xếp thông thường cho các field khác
+    sort[sortBy as string] = sortDirection === 'asc' ? 1 : -1;
+    
+    // Thực hiện truy vấn cho các field khác
     const totalItems = await Product.countDocuments(filter);
     const productDocs = await Product.find(filter)
       .sort(sort)
@@ -263,13 +399,39 @@ export const getTopSellingProducts = asyncHandler(async (req: Request, res: Resp
  */
 export const getTopDiscountedProducts = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const productDocs = await Product.find({ 
-      isActive: true,
-      isSale: true,
-      salePrice: { $gt: 0 }
-    })
-    .sort({ price: -1 }) // Lọc theo giảm giá từ cao đến thấp
-    .limit(10);
+    // Sử dụng aggregation để tính mức giảm giá và sắp xếp
+    const products = await Product.aggregate([
+      {
+        $match: { 
+          isActive: true,
+          isSale: true,
+          salePrice: { $gt: 0 },
+          price: { $gt: 0 } // Đảm bảo price > 0 để tránh chia cho 0
+        }
+      },
+      {
+        $addFields: {
+          discountAmount: { $subtract: ["$price", "$salePrice"] }, // Số tiền giảm
+          discountPercentage: { // Phần trăm giảm giá
+            $multiply: [
+              { $divide: [{ $subtract: ["$price", "$salePrice"] }, "$price"] },
+              100
+            ]
+          }
+        }
+      },
+      {
+        $sort: { discountPercentage: -1 } // Sắp xếp theo % giảm giá từ cao đến thấp
+      },
+      {
+        $limit: 10
+      }
+    ]);
+    
+    // Chuyển đổi các document từ aggregate sang model đầy đủ và populate
+    const productDocs = await Promise.all(
+      products.map(product => Product.findById(product._id))
+    );
     
     // Sử dụng helper để populate
     const populatedProducts = await Promise.all(
