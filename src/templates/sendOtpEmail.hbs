@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Mã xác thực OTP</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 20px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .greeting {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        .otp-container {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 30px 0;
+            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+        }
+        .otp-label {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .otp-code {
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .otp-note {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #17a2b8;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 14px;
+        }
+        .contact-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #e74c3c;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .security-tips {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+        }
+        .security-tips h4 {
+            color: #155724;
+            margin-bottom: 10px;
+        }
+        .security-tips ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .security-tips li {
+            margin-bottom: 8px;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🛒 Cửa hàng</div>
+            <div class="title">Mã xác thực OTP</div>
+        </div>
+
+        <div class="greeting">
+            Xin chào <strong>{{name}}</strong>,
+        </div>
+
+        <p>Bạn đã yêu cầu mã xác thực OTP để {{reason}}. Dưới đây là mã xác thực của bạn:</p>
+
+        <div class="otp-container">
+            <div class="otp-label">Mã xác thực OTP</div>
+            <div class="otp-code">{{otp}}</div>
+            <div class="otp-note">Mã này có hiệu lực trong {{expiryMinutes}} phút</div>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Lưu ý quan trọng:</strong><br>
+            • Mã OTP này chỉ có hiệu lực trong {{expiryMinutes}} phút kể từ lúc gửi<br>
+            • Không chia sẻ mã này với bất kỳ ai<br>
+            • Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email này
+        </div>
+
+        <div class="info">
+            <strong>ℹ️ Hướng dẫn sử dụng:</strong><br>
+            1. Sao chép mã OTP ở trên<br>
+            2. Quay lại trang web/ứng dụng<br>
+            3. Dán mã vào ô "Mã xác thực"<br>
+            4. Nhấn "Xác thực" để hoàn tất
+        </div>
+
+        <div class="security-tips">
+            <h4>🔒 Bảo mật tài khoản</h4>
+            <ul>
+                <li>Không bao giờ chia sẻ mã OTP với người khác</li>
+                <li>Đảm bảo bạn đang truy cập từ trang web chính thức</li>
+                <li>Nếu nhận được email không mong muốn, hãy liên hệ với chúng tôi ngay</li>
+                <li>Thường xuyên thay đổi mật khẩu tài khoản</li>
+            </ul>
+        </div>
+
+        <div class="contact-info">
+            <strong>📞 Cần hỗ trợ?</strong><br>
+            Nếu bạn gặp khó khăn hoặc cần hỗ trợ, vui lòng liên hệ với chúng tôi:<br>
+            <br>
+            📧 Email: {{supportEmail}}<br>
+            📱 Hotline: {{supportPhone}}<br>
+            🌐 Website: {{website}}
+        </div>
+
+        <div class="footer">
+            <p>Email này được gửi tự động, vui lòng không trả lời.</p>
+            <p>© {{currentYear}} Cửa hàng. Tất cả quyền được bảo lưu.</p>
+            <p>Thời gian gửi: {{formatDate sendTime}}</p>
+        </div>
+    </div>
+</body>
+</html>

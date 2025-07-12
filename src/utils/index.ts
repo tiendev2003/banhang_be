@@ -1,7 +1,8 @@
-import dotenv from 'dotenv';
+ import dotenv from 'dotenv';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { IUser } from '../models/user.model';
+import emailService from '../services/email.service';
 
 dotenv.config();
 
@@ -83,21 +84,39 @@ export const sendErrorResponse = (
 export interface EmailOptions {
   to: string;
   subject: string;
-  text: string;
+  text?: string;
   html?: string;
+  template?: string;
+  context?: Record<string, any>;
 }
 
 // Hàm gửi email
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
   try {
-    // Trong môi trường thực tế, bạn sẽ cần sử dụng một thư viện như nodemailer
-    // Đây là một hàm giả định để làm ví dụ
     console.log('Gửi email...');
     console.log('Đến:', options.to);
     console.log('Chủ đề:', options.subject);
-    console.log('Nội dung:', options.text);
     
-    // Giả định email đã được gửi thành công
+    if (options.template && options.context) {
+      // Sử dụng template
+      console.log('Sử dụng template:', options.template);
+      await emailService.sendOrderEmail(
+        options.to,
+        options.subject,
+        options.template,
+        options.context
+      );
+    } else {
+      // Sử dụng text/html đơn giản
+      console.log('Nội dung:', options.text);
+      await emailService.sendOrderEmail(
+        options.to,
+        options.subject,
+        'sendOtpEmail', // Template mặc định
+        { otp: options.text }
+      );
+    }
+     
     return true;
   } catch (error) {
     console.error('Lỗi khi gửi email:', error);

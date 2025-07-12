@@ -47,6 +47,13 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+// Interface cho reset mật khẩu
+export interface ResetPasswordRequest {
+  email: string;
+  oldPassword: string;
+  newPassword: string;
+}
+
 // Interface cho OTP
 export interface OtpRequest {
   email: string;

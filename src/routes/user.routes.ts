@@ -9,12 +9,14 @@ import {
     getUserProfile,
     login,
     register,
+    resetPassword,
     sendOtp,
     updateAvatar,
     updateUser,
     verifyOtp,
 } from '../controllers/user.controller';
 import { admin, protect } from '../middleware/auth.middleware';
+import { validateResetPasswordRequest } from '../middleware/validation.middleware';
 
 const router = Router();
 
@@ -259,6 +261,47 @@ router.put('/update', protect, updateUser);
  *         description: Incorrect old password
  */
 router.post('/change-password', protect, changePassword);
+
+/**
+ * @swagger
+ * /api/users/reset-password:
+ *   post:
+ *     summary: Reset password with email and old password
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - oldPassword
+ *               - newPassword
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: User's email address
+ *               oldPassword:
+ *                 type: string
+ *                 description: Current password
+ *               newPassword:
+ *                 type: string
+ *                 description: New password
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *       401:
+ *         description: Incorrect old password
+ *       403:
+ *         description: Account is locked
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/reset-password', validateResetPasswordRequest, resetPassword);
 
 /**
  * @swagger
